@@ -1,0 +1,1 @@
+Forcing data included in this directory are used to run and analyze Toy Model simulations. Before using those for any other purpose, please contact Paul Bartlett at Climate Research Division, Environment and Climate Change Canada, Toronto, Ontario, Canada (paul.bartlett@canada.ca).
