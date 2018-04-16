@@ -1,0 +1,1 @@
+Forcing data included in this directory ase used to run and analyze Toy Model simulations. Before using those for any other purpose, please contact Tobias Jonas at WSL Institute for Snow and Avalanche Research SLF, Davos Dorf, Switzerland (jonas@slf.ch).
