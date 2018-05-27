@@ -8,6 +8,7 @@ forcing. This file gives an overview of how to drive the Toy Model.
 %}
 % run DataPrep_Abisko.m first
 load ForcingData_ToyModel_Abisko.mat
+
 %-------------------------------------------------------------------------%
 %--------------------  Location & General Parameters  --------------------%
 Longitude = 18+49/60+14/60/60;
@@ -20,6 +21,7 @@ Height_of_Wind_Obs = 2;
 dt = time_1h(2)-time_1h(1);
 Timestep_CLM = dt*24*3600;  % for CLM timestep required in [s]
 Timestep_SP = dt*24;        % for Alptal Precipitation in mm/hour and timestep 1 hour -> dt = 1
+
 
 %-------------------------------------------------------------------------%
 %------------------------  Vegetation Parameters  ------------------------%
