@@ -1,4 +1,5 @@
-function [rs,psn] = Stomata(PFT,forc_pbot,thm,btran,apar,sla,ei,ea,o2,co2,rb,dayl_factor,tl)
+function [rs,psn] = Stomata(PFT,forc_pbot,thm,btran,apar,sla,ei,ea,o2,...
+    co2,rb,dayl_factor,tl)
 %{
 Leaf stomatal resistance and leaf photosynthesis. Modifications for CN code.
 %}

@@ -1,4 +1,5 @@
-function rs = Photosynthesis(PFT,forc_pbot,tgcm,btran,esat_tv,eair,oair,cair,rb,dayl_factor,t_veg,nrad,tlai_z,vcmaxcint,par_z,lai_z)
+function rs = Photosynthesis(PFT,forc_pbot,tgcm,btran,esat_tv,eair,...
+    oair,cair,rb,dayl_factor,t_veg,nrad,tlai_z,vcmaxcint,par_z,lai_z)
 %{
 Leaf photosynthesis and stomatal conductance calculation.
 All calculations for psn variables are excluded because only the resistances

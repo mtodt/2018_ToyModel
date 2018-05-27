@@ -7,6 +7,7 @@ and humidity profiles of surface boundary layer.
 vkc = 0.4;      % von Karman constant
 zetam = 1.574;  % transition point of flux-gradient relation (wind profile)
 zetat = 0.465;  % transition point of flux-gradient relation (temperature profile)
+
 % wind profile
 zldis = forc_hgt_u_pft - displa;
 zeta = zldis/obu;
@@ -27,6 +28,7 @@ else
 end
 vds = vds_temp;
 % calculation of 10m wind added for CLM4.5 -> not necessary here
+
 % temperature profile
 zldis = forc_hgt_t_pft - displa;
 zeta = zldis/obu;
@@ -40,6 +42,7 @@ elseif zeta <= 1
 else
     temp1 = vkc/(log(obu/z0h) + 5 - 5*z0h/obu + (5*log(zeta) + zeta - 1));
 end
+
 % humidity profile
 if forc_hgt_q_pft == forc_hgt_t_pft && z0q == z0h
     temp2 = temp1;
@@ -56,6 +59,7 @@ else
         temp2 = vkc/(log(obu/z0q) + 5 - 5*z0q/obu + (5*log(zeta)+zeta-1));
     end
 end
+
 % temperature profile applied at 2m
 zldis = 2 + z0h;
 zeta = zldis/obu;

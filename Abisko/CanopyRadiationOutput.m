@@ -6,21 +6,18 @@ Computes upward and downward radiation below and above canopy.
 %}
 
 %-------------------------  Physical Parameters  --------------------------
-
 em_ground = emg;          % ground emissivity
 boltz = 5.67*10^(-8);     % Stefan-Boltzmann constant [W m^{-2} K^{-4}]
 
+
 %--------------------------------------------------------------------------
 %-----------------------------  Calculations  -----------------------------
-
 % attenuation factors for two-layer canopy
-
 att_SW = 1-sig_trunk;
 att_LW = 1-sig_trunk;
 att_SWdir = 1-sig_trunk_dir;
 
 %------------------------------  Shortwave  -------------------------------
-
 % diffuse shortwave radiation fluxes above and below canopy
 SW_refl_ac_loc = SW_in_ac*(sig_leaf*alb_leaf + ((1-sig_leaf)^2)*sig_trunk*alb_trunk +...
     alb_ground*((1-sig_leaf)^2)/(1 - sig_leaf*alb_leaf*alb_ground)*att_SW);
@@ -39,9 +36,7 @@ SW_refl_ac_loc3 = SW_in_ac*(sig_trunk_dir*alb_trunk +...
 SW_in_bc_loc3 = SW_in_ac*att_SWdir/(1 - sig_leaf_dir*alb_leaf*alb_ground);
 SW_refl_bc_loc3 = SW_in_bc_loc3*alb_ground;
 
-
 %-------------------------------  Longwave  -------------------------------
-
 % longwave radiation fluxes above and below canopy
 RAG = em_ground*(-boltz*T_sfc^4 +...
     ((1-sig_leaf)*LW_in_ac*att_LW + sig_leaf*em_leaf*boltz*(T_leaf^4)*att_LW +...
@@ -60,9 +55,7 @@ LW_in_bc = RAG/em_ground + boltz*T_sfc^4;
 LW_refl_bc = (1-em_ground)*LW_in_bc + em_ground*boltz*T_sfc^4;
 LW_refl_ac = LW_in_ac - RAG - RAV - RAT;
 
-
 %---------------------  scaling with Canopy Closure  ----------------------
-
 % canopy closure
 CC_dif = 1-DirectThroughfall;       % for diffuse shortwave and longwave radiation
 if SolAngle > 0
@@ -83,7 +76,6 @@ elseif strcmp(sw_to_trunk,'yes') == 1
     end
     CC_dir_trunk = CC_dir - CC_dir_leaf;
 end
-
 		 
 % shortwave fluxes (diffuse)
 SW_refl_ac = (SW_refl_ac_loc*CC_dif + SW_in_ac*alb_ground*(1-CC_dif))*(1-frac_dir);

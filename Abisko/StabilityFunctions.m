@@ -28,8 +28,4 @@ else
 	psi_h = -((1 + a*xi*2/3)^1.5) + b*(xi - c/d)*exp(-d*xi) + b*c/d - 1;
 end
 
-
-
-
-
 end

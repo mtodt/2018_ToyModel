@@ -1,5 +1,6 @@
 function [ch_canopy,ce_canopy,ce_transpiration,ce_interception,ce_condensation,ra,rs]...
-    = TurbulentExchange(SW_in_ac,T_air,wind,RelHum,T_can,LAI,z_can,refheight,z_0mg,frac_wet,SD,T_snowsurf)
+    = TurbulentExchange(SW_in_ac,T_air,wind,RelHum,T_can,LAI,z_can,refheight,...
+    z_0mg,frac_wet,SD,T_snowsurf)
 %{
 Turbulent exchange coefficients canopy model
 The Shuttelworth and Wallace (1985) approach contains rather complicated

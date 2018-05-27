@@ -13,7 +13,6 @@ and final mass balance (evaporation of intercepted water, and transpiration.
 %--------------------------------------------------------------------------
 %-------------------------  Physical Parameters  --------------------------
 %--------------------------------------------------------------------------
-
 T_freez = 273.15;       % freezing temperature [K]
 T_melt = 273.15;        % melting temperature [K]
 
@@ -23,7 +22,6 @@ lh_vap = 2.504*10^6;    % latent heat of vaporisation [J kg^{-1}]
 boltz = 5.67*10^(-8);   % Stefan-Boltzmann constant [W m^{-2} K^{-4}]
 
 %--------------------------  Parameters for EB  ---------------------------
-
 alb_can_dry = 0.11;     % albedo of dry canopy (calibr: 0.09, Alptal)
 alb_can_wet = 0.11;     % albedo of wet canopy (calibr: 0.09, Alptal)
 alb_can_snow = 0.35;    % albedo of snow covered canopy (calibr. Alptal, but 0.3 in Gouttevin et al. (2015))
@@ -37,7 +35,6 @@ BM_density = 900;       % [kg m^{-3}]
 dT_can_maxperh = 7;     % maximum allowed canopy temperature change [K h^{-1}]
 
 %-----------------  scales for aerodynamical resistances  -----------------
-
 % canopy roughness lengths for heat and momentum (in DataClasses.cc)
 z_0m = z_can*0.1;
 z_0h = z_0m*0.1;        % ??? z_0h/z_0m = 0.999 in Gouttevin et al. (2015)
@@ -52,7 +49,6 @@ z_displ = z_can*(2/3);
 
 %--------------------------------------------------------------------------
 %----------------  2.1 prepare for canopy energy balance  -----------------
-
 % Radiation Transmissivity (Beer-Lambert type of law)
     % first, transmissivity of diffuse (and longwave) radiation
 eps = 10^(-3);
@@ -81,7 +77,8 @@ end
 
 % Turbulent Transport Coefficients
 [ch_canopy,ce_canopy,ce_transpiration,ce_interception,ce_condensation,ra,rs]...
-    = TurbulentExchange(SW_in_ac,T_air,wind,RelHum,T_can,LAI,z_can,z_ref,z_0mg,frac_wet,SnowDepth,T_ground);
+    = TurbulentExchange(SW_in_ac,T_air,wind,RelHum,T_can,LAI,z_can,...
+    z_ref,z_0mg,frac_wet,SnowDepth,T_ground);
 
 %--------------------------------------------------------------------------
 %-------------------  2.2 Energy balance of the canopy  -------------------
@@ -395,7 +392,8 @@ of turbulent exchange coefficients is needed in case of big changes in TC.
 %}
     if abs(T_can-T_can_old) > (dT_can_maxperh*dt)
         [ch_canopy,ce_canopy,ce_transpiration,ce_interception,ce_condensation,ra,rs]...
-    = TurbulentExchange(SW_in_ac,T_air,wind,RelHum,T_can,LAI,z_can,z_ref,z_0mg,frac_wet_new,SnowDepth,T_ground);
+    = TurbulentExchange(SW_in_ac,T_air,wind,RelHum,T_can,LAI,z_can,...
+    z_ref,z_0mg,frac_wet_new,SnowDepth,T_ground);
     end
 
     T_can = (T_can+T_can_old)/2;

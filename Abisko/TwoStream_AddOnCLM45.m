@@ -1,6 +1,9 @@
-function [abs_veg_dir,abs_veg_dif,alb_veg_dir,alb_veg_dif,trans_veg_dir_dir,trans_veg_dif_dir,trans_veg_dif_dif,omega,gdir,...
-    fabd_sun_z,fabd_sha_z,fabi_sun_z,fabi_sha_z,fsun_z,nrad,tlai_z,vcmaxcintsun,vcmaxcintsha]...
-    = TwoStream_AddOnCLM45(coszen,PFT,elai,esai,t_veg,frac_wet,alb_ground_dir,alb_ground_dif,waveband,nlevcan)
+function [abs_veg_dir,abs_veg_dif,alb_veg_dir,alb_veg_dif,...
+    trans_veg_dir_dir,trans_veg_dif_dir,trans_veg_dif_dif,omega,gdir,...
+    fabd_sun_z,fabd_sha_z,fabi_sun_z,fabi_sha_z,fsun_z,nrad,tlai_z,...
+    vcmaxcintsun,vcmaxcintsha]...
+    = TwoStream_AddOnCLM45(coszen,PFT,elai,esai,t_veg,frac_wet,...
+    alb_ground_dir,alb_ground_dif,waveband,nlevcan)
 %{
 DESCRIPTION:
 Two-stream fluxes for canopy radiative transfer.
@@ -52,6 +55,7 @@ for i=1:2
     alpha(i) = max(rhol(i,PFT)*frac_LAI+rhos(i,PFT)*frac_SAI,10^(-6));
     tau(i) = max(taul(i,PFT)*frac_LAI+taus(i,PFT)*frac_SAI,10^(-6));
 end
+
 % parameters for intercepted snow
 omega_snow = [0.8 0.4];
 beta_dir_snow = [0.5 0.5];
@@ -61,7 +65,6 @@ beta_dif_snow = [0.5 0.5];
 t_freez = 273.15;
 
 %--------------------------  target definition  ---------------------------
-
 gdir = 0;
 %{
 Only calculated in CLM when coszen>0 but needed here later on in any case
@@ -79,7 +82,9 @@ abs_veg_dir = zeros(1,2); abs_veg_dif = zeros(1,2);
 abs_veg_dir_sun = zeros(1,2); abs_veg_dif_sun = zeros(1,2);
 abs_veg_dir_sha = zeros(1,2); abs_veg_dif_sha = zeros(1,2);
 alb_veg_dir = zeros(1,2); alb_veg_dif = zeros(1,2);
-trans_veg_dir_dir = zeros(1,2); trans_veg_dif_dir = zeros(1,2); trans_veg_dif_dif = zeros(1,2);
+trans_veg_dir_dir = zeros(1,2);
+trans_veg_dif_dir = zeros(1,2);
+trans_veg_dif_dif = zeros(1,2);
 
 %----------------------  CLM4.5 multi-layer canopy  -----------------------
 % ncan = 0;
@@ -195,11 +200,13 @@ elseif nlevcan > 1
     vcmaxcintsha = 0;
 end
 
+
 %--------------------------------------------------------------------------
 %-----------------------------  calculations  -----------------------------
 %--------------------------------------------------------------------------
 if coszen > 0
-cosz = max(0.001, coszen);  % cosine of solar zenith angle FOR NEXT TIMESTEP since usually at the end
+cosz = max(0.001, coszen);
+% cosine of solar zenith angle FOR NEXT TIMESTEP since usually at the end
 
 chil = min(max(xl(PFT),-0.4),0.6);    % -0.4 <= xl <= 0.6
 if abs(chil) <= 0.01
@@ -209,7 +216,8 @@ phi1 = 0.5 - 0.633*chil - 0.33*chil^2;
 phi2 = 0.877*(1-2*phi1);
 gdir = phi1 + phi2*cosz; % relative projected area of leaves and stems
 twostext = gdir/cosz;
-mu_avg = (1-(phi1/phi2)*log((phi1+phi2)/phi1))/phi2;  % average inverse diffuse optical depth per unit leaf and stem area
+mu_avg = (1-(phi1/phi2)*log((phi1+phi2)/phi1))/phi2;
+% average inverse diffuse optical depth per unit leaf and stem area
 
 temp0 = gdir + phi2*cosz;
 temp1 = phi1*cosz;
@@ -248,7 +256,8 @@ fabi_sha_z - absorbed shaded leaf diffuse PAR (per unit shaded lai+sai) for each
     omega_veg(i) = alpha(i)+tau(i);
     asu = 0.5*omega_veg(i)*gdir/temp0*temp2;
     beta_dir_veg(i) = (1+mu_avg*twostext)/(omega_veg(i)*mu_avg*twostext)*asu;
-    beta_dif_veg(i) = ((alpha(i)+tau(i))+(alpha(i)-tau(i))*((1+chil)/2)^2)/(2*omega_veg(i));
+    beta_dif_veg(i) = ((alpha(i)+tau(i))+(alpha(i)-tau(i))*((1+chil)/2)^2)...
+        /(2*omega_veg(i));
     % adjustment for intercepted snow
     if t_veg > t_freez
         tmp0 = omega_veg(i);
@@ -256,8 +265,10 @@ fabi_sha_z - absorbed shaded leaf diffuse PAR (per unit shaded lai+sai) for each
         tmp2 = beta_dif_veg(i);
     else
         tmp0 = (1-frac_wet)*omega_veg(i) + frac_wet*omega_snow(i);
-        tmp1 = ((1-frac_wet)*omega_veg(i)*beta_dir_veg(i) + frac_wet*omega_snow(i)*beta_dir_snow(i))/tmp0;
-        tmp2 = ((1-frac_wet)*omega_veg(i)*beta_dif_veg(i) + frac_wet*omega_snow(i)*beta_dif_snow(i))/tmp0;
+        tmp1 = ((1-frac_wet)*omega_veg(i)*beta_dir_veg(i) ...
+            + frac_wet*omega_snow(i)*beta_dir_snow(i))/tmp0;
+        tmp2 = ((1-frac_wet)*omega_veg(i)*beta_dif_veg(i) ...
+            + frac_wet*omega_snow(i)*beta_dif_snow(i))/tmp0;
     end
     omega(i) = tmp0;
     beta_dir(i) = tmp1;
@@ -320,8 +331,10 @@ absorbed, reflected, transmitted fluxes per unit incoming radiation
         - (1-alb_ground_dif(i))*trans_veg_dif_dir(i);
 
     % additions for sunlit and shaded canopy fractions
-    a1 = h1/sigma * (1-s2^2)/(2*twostext) + h2*(1-s2*s1)/(twostext+h) + h3*(1-s2/s1)/(twostext-h);
-    a2 = h4/sigma * (1-s2^2)/(2*twostext) + h5*(1-s2*s1)/(twostext+h) + h6*(1-s2/s1)/(twostext-h);
+    a1 = h1/sigma * (1-s2^2)/(2*twostext) + h2*(1-s2*s1)/(twostext+h) ...
+        + h3*(1-s2/s1)/(twostext-h);
+    a2 = h4/sigma * (1-s2^2)/(2*twostext) + h5*(1-s2*s1)/(twostext+h) ...
+        + h6*(1-s2/s1)/(twostext-h);
     abs_veg_dir_sun(i) = (1-omega(i)) * (1-s2+1/mu_avg*(a1+a2));
     abs_veg_dir_sha(i) = abs_veg_dir(i) - abs_veg_dir_sun(i);
 
@@ -522,8 +535,10 @@ from above and also canopy-integrated scaling coefficients.
                 du = h*tmp5*s1;
                 dh10 = (v*du - u*dv)/(v^2);
                 
-                da1 = h7*s2*s1 +  h8*s2/s1 + (1-s2*s1)/(twostext+h)*dh7 + (1-s2/s1)/(twostext-h)*dh8;
-                da2 = h9*s2*s1 + h10*s2/s1 + (1-s2*s1)/(twostext+h)*dh9 + (1-s2/s1)/(twostext-h)*dh10;
+                da1 = h7*s2*s1 +  h8*s2/s1 + (1-s2*s1)/(twostext+h)*dh7 ...
+                    + (1-s2/s1)/(twostext-h)*dh8;
+                da2 = h9*s2*s1 + h10*s2/s1 + (1-s2*s1)/(twostext+h)*dh9 ...
+                    + (1-s2/s1)/(twostext-h)*dh10;
                 
                 % flux derivatives
                 d_ftii = -h*h9*s1 + h*h10/s1 + dh9*s1 + dh10/s1;

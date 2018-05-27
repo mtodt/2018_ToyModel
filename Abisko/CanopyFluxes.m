@@ -28,6 +28,7 @@ Note:
     of water flux from the leaf between the iteration step (n+1) and (n)
     less than 0.1 W/m2; or the iterative steps over 40.
 %}
+    
 %--------------------------------------------------------------------------
 %-------------------------  Physical Parameters  --------------------------
 alpha_aero = 1;     % constant for aerodynamic parameter weighting
@@ -49,6 +50,8 @@ dlemin = 0.1;       % max limit for energy flux convergence [W m^{-2}]
 % characteristic leaf dimension [m]
 dleaf = [0 0.04 0.04 0.04 0.04 0.04 0.04 0.04 0.04 0.04 0.04 0.04 0.04...
     0.04 0.04 0.04 0.04 0.04 0.04 0.04 0.04];   
+
+
 %--------------------------------------------------------------------------
 %----------------------------  Initialisation  ----------------------------
 del    = 0;     % change in leaf temperature from previous iteration
@@ -58,6 +61,7 @@ wtalq  = 0;
 wtgq   = 0;
 wtaq0  = 0;
 obuold = 0;
+
 
 %--------------------------------------------------------------------------
 %----------------------------  Calculations  ----------------------------
@@ -74,6 +78,7 @@ dayl = 2*13750.9871*acos(temp);
     max_dayl = 2*13750.9871*acos(temp);
 dayl_factor = min(1,max(0.01,(dayl^2)/(max_dayl^2)));
 rb1 = 0;
+
 % modify aerodynamic parameters for sparse/dense canopy (X. Zeng)
 lt = min(elai+esai,tlsai_crit);
 egvf = (1 - alpha_aero*exp(-lt))/(1 - alpha_aero*exp(-tlsai_crit));
@@ -81,12 +86,15 @@ displa = egvf*displa;   % displacement height [m]
 z0mv   = exp(egvf*log(z0mv) + (1-egvf)*log(z0mg));
 z0hv   = z0mv;
 z0qv   = z0mv;
+
 % net absorbed longwave radiation by canopy and ground = air+bir*t_veg^4+cir*t_grnd^4
 air =  emv*(1+(1-emv)*(1-emg))*forc_lwrad;
 bir = -(2 - emv*(1-emg))*emv*sb;
 cir =  emv*emg*sb;
+
 % saturated vapor pressure, specific humidity, and their derivatives at the leaf surface
 [el,deldT,qsatl,qsatldT] = QSat(t_veg,forc_pbot);
+
 % initialise flux profile
 nmozsgn = 0;
 taf = (t_grnd + thm)/2;
@@ -117,8 +125,10 @@ zldis = forc_hgt_u_pft - displa;    % always >0 since measurements above canopy
     obu = zldis/zeta;
     
 i = 0;
+
 % Energy Balance output: size stems from SNOWPACK + err  x  iterations
 EB_veg = nan(17,41);
+
 % stability iteration
 while i <= 40
     % determine friction velocity, and potential temperature and humidity profiles of the surface boundary layer
@@ -322,6 +332,7 @@ stability parameter for next iteration.
     
     % Test For Convergence
     i=i+1;
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % adding individual terms of energy balance to output
 SWnet = sabv;
@@ -354,6 +365,7 @@ EB_veg(15,i) = dSHnetdTveg;
 EB_veg(16,i) = dLHnetdTveg;
 EB_veg(17,i) = err;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     if i > 2
         dele = abs(efe - efeb);
         efeb = efe;
@@ -363,35 +375,45 @@ EB_veg(17,i) = err;
         end
     end
 end
+
 % energy balance check
 err = sabv + air + bir*tlbef^3 * (tlbef + 4*dt_veg) + cir*t_grnd^4 ...
     - eflx_sh_veg - hvap*qflx_evap_veg;
+
 % fluxes from ground to canopy space
 delt = wtal*t_grnd - wtl0*t_veg - wta0*thm;
 tau = -forc_rho*forc_wind/ram1;
 eflx_sh_grnd = cpair*forc_rho*wtg*delt;
 qflx_evap_soi = forc_rho*wtgq*delq;
+
 % 2m height air temperature
 t_ref2m = thm + temp1*dth*(1/temp12m - 1/temp1);
+
 % 2m height specific humidity
 q_ref2m = forc_q + temp2*dqh*(1/temp22m - 1/temp2);
+
 % 2m height relative humidity
 [e_ref2m,de2mdT,qsat_ref2m,dqsat2mdT] = QSat(t_ref2m,forc_pbot);
 rh_ref2m = min(100,q_ref2m/qsat_ref2m * 100);
+
 % downward longwave radiation below the canopy
 % dlrad = (1-emv)*emg*forc_lwrad + emv*emg*sb*tlbef^3 * (tlbef + 4*dt_veg);
 dlrad = (1-emv)*forc_lwrad + emv*sb*tlbef^3 * (tlbef + 4*dt_veg);
 % excluded emg since we want radiation downwards not radiation absorbed by the ground
+
 % upward longwave radiation above the canopy
 ulrad = (1-emg)*(1-emv)^2 * forc_lwrad ...
     + emv*(1+(1-emg)*(1-emv))*sb*tlbef^3 * (tlbef + 4*dt_veg) ...
     + emg*(1-emv)*sb*t_grnd^4;
+
 % % derivate of soil energy flux with respect to soil temperature
 % cgrnds = cgrnds + cpair*forc_rho*wtg*wtal;
 % cgrndl = cgrndl + forc_rho*wtgq*wtalq*dqgdT;
 % cgrnd = cgrnds + cgrndl*htvp;
+
 % update dew accumulation [kg m^{-2}]
 h2ocan = max(0,h2ocan + (qflx_tran_veg - qflx_evap_veg)*dtime);
+
 % % total photosynthesis
 % fpsn = psnsun*laisun + psnsha*laisha;
     

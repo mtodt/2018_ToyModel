@@ -29,6 +29,8 @@ vegetation is calculated twice, by each of the modules, using the same
 input (forcing, roughness parameters, canopy coverage, LAI/SAI, results of
 mass fluxes, etc.).
 %}
+    
+
 %--------------------------------------------------------------------------
 %--------------------------  Physical Constants  --------------------------
 grav = 9.80616; % acceleration of gravity [m s^{-2}]
@@ -43,6 +45,7 @@ z0mr = [0 0.055 0.055 0.055 0.075 0.075 0.055 0.055 0.055 0.12 0.12 0.12...
 displar = [0 0.67 0.67 0.67 0.67 0.67 0.67 0.67 0.67 0.68 0.68 0.68 0.68...
     0.68 0.68 0.68 0.68 0.68 0.68 0.68 0.68];
  
+
 %--------------------------------------------------------------------------
 %-------------------------------  Forcing  --------------------------------
 %{
@@ -57,8 +60,10 @@ observational sites this is redundant.
     % SNOWPACK
 sinelev = SolarElevationAngle(JulDay,lat,lon);
 SolAngle = asin(sinelev);
+
 % solar forcing data include nir radiation?
 waveband = 1 + NIR_logical; % NIR_logical 1 or 0 depending on available nir forcing
+
 % atmospheric pressure [Pa]
 dalr = 0.0065;      % dry adiabatic lapse rate [K m^{-1}]
 p0 = 101325.;       % standard pressure at sea level [Pa]
@@ -66,11 +71,14 @@ T0 = 288.15;        % standard temperature (25°C) at sea level [K]
 R0 = 6356766.0;     % radius of Earth [m]
 GasR_da = 287.0423; % gas constant for dry air [J kg^{-1} K^{-1}]
 forc_pbot = p0*(1 - (dalr*R0*altitude)/(T0*(R0+altitude)))^(grav/(dalr*GasR_da));
+
 % atmospheric potential temperature [K]
 forc_th = forc_t*exp((forc_hgt_t/(rair*forc_t/grav))*(rair/cpair));
+
 % atmospheric O2 and CO2 concentrations [Pa] -  CO2 calculation neither prognostic nor diagnostic
 forc_po2 = 0.209*forc_pbot;          % per constant atmospheric O2 molar ratio [mol mol^{-1}]
 forc_pco2 = 355*10^(-6)*forc_pbot;   % per atmospheric CO2 molar ratio (by volume) [umol mol^{-1}]
+
 % atmospheric specific humidity [kg kg^{-1}]
 tdc = min(50,max(-50,forc_t-273.15));
 if forc_t > 273.15      % saturation vapor pressure over water [Pa]
@@ -84,9 +92,11 @@ else                    % saturation vapor pressure over ice [Pa]
 end
 qsat = 0.622*e/(forc_pbot-0.378*e);
 forc_q = qsat*forc_rh/100;
+
 % density of air [kg m^{-3}]
 forc_vp = forc_q*forc_pbot/(0.622 + 0.378*forc_q);      % atmospheric vapor pressure [Pa]
-forc_rho = (forc_pbot - 0.378*forc_vp)/(rair*forc_t);   % density of most air [kg m^{-3}]
+forc_rho = (forc_pbot - 0.378*forc_vp)/(rair*forc_t);   % density of moist air [kg m^{-3}]
+
 
 %--------------------------------------------------------------------------
 %-------------------------  Physical Parameters  --------------------------
@@ -113,30 +123,38 @@ if elai+esai >= 0.05
 else
     frac_veg_nosno_alb = 0;
 end
+
 % surface emissivities
 avmuir = 1;  % infrared inverse optical depth for longwave radiation
 emv = 1 - exp(-(elai+esai)/avmuir);
 emsoil = 0.96;
 emsnow = 0.97;
 emg = emsoil*(1-frac_sno) + emsnow*frac_sno;
+
 albgrd = zeros(1,2);
 albgrd(1) = alb_ground;
 albgri = albgrd;
+
+
 %--------------------------------------------------------------------------
 %-------------------  Computations = Calling Functions  -------------------
 %---------------------  0) albedos for this timestep  ---------------------
-[fabd,fabi,albd,albi,ftdd,ftid,ftii,omega,gdir,...
-    fabd_sun_z,fabd_sha_z,fabi_sun_z,fabi_sha_z,frac_sun_z,nrad,tlai_z,vcmaxcintsun,vcmaxcintsha]...
-    = TwoStream_AddOnCLM45(coszen,PFT,elai,esai,t_veg,fwet,albgrd,albgri,waveband,nlevcan);
+[fabd,fabi,albd,albi,ftdd,ftid,ftii,omega,gdir,fabd_sun_z,fabd_sha_z,...
+    fabi_sun_z,fabi_sha_z,frac_sun_z,nrad,tlai_z,vcmaxcintsun,vcmaxcintsha]...
+    = TwoStream_AddOnCLM45(coszen,PFT,elai,esai,t_veg,fwet,albgrd,...
+    albgri,waveband,nlevcan);
+
 % 1) canopy interception and precipitation on ground (incl. wet fraction)
-[IntCapacity,h2ocan,qflx_prec_intr,qflx_through_snow,qflx_through_rain,qflx_candrip_snow,...
-    qflx_candrip_rain,qflx_prec_grnd_snow,qflx_prec_grnd_rain,fwet]...
-    = CanopyHydrology45(elai,esai,frac_veg_nosno_alb,forc_rain,forc_snow,h2ocan,dt_CLM);
+[IntCapacity,h2ocan,qflx_prec_intr,qflx_through_snow,qflx_through_rain,...
+    qflx_candrip_snow,qflx_candrip_rain,qflx_prec_grnd_snow,...
+    qflx_prec_grnd_rain,fwet]...
+    = CanopyHydrology45(elai,esai,frac_veg_nosno_alb,forc_rain,...
+    forc_snow,h2ocan,dt_CLM);
 
 %----------------------  2) surface solar radiation  ----------------------
 [sabv,sabvd,sabvi,sabg,fsa,laisun,laisha,parsun_z,parsha_z,laisun_z,laisha_z]...
-    = SurfaceRadiation(PFT,elai,esai,gdir,coszen,forc_sol_dir,forc_sol_dif,waveband,...
-    albgrd,albgri,omega,fabd,fabi,ftdd,ftid,ftii,...
+    = SurfaceRadiation(PFT,elai,esai,gdir,coszen,forc_sol_dir,...
+    forc_sol_dif,waveband,albgrd,albgri,omega,fabd,fabi,ftdd,ftid,ftii,...
     nrad,tlai_z,frac_sun_z,fabd_sun_z,fabd_sha_z,fabi_sun_z,fabi_sha_z);
 
 %---------------  3) leaf temperature and surface fluxes ?  ---------------
@@ -152,9 +170,11 @@ Furthermore, the volumetric fraction of water and ice within the soil is
 required, which is then replaced by a proxy.
 %}
 t_grnd = t_soisno;  % calculated out of snow cover fraction and wet fraction in CLM4.5
+
 % saturated vapor pressure, specific humidity
 [qg,soilbeta,btran,btran2] = Biogeophysics1(PFT,SoilWater,SoilWaterFlag,...
     om,sand,clay,frac_sno,frac_soil_frozen,t_grnd,forc_pbot,forc_q);
+
 % ground roughness lengths
 if frac_sno > 0
     z0mg = zsno;
@@ -163,16 +183,19 @@ else
 end
 z0hg = z0mg;
 z0qg = z0mg;
+
 % potential, virtual temperature, and wind speed at the reference height
 beta = 1;
 zii = 1000;
 thv = forc_th*(1 + 0.61*forc_q);
+
 % roughness lengths over vegetation
 z0m = z0mr(PFT)*htop;
 displa = displar(PFT)*htop;
 z0mv = z0m;
 z0hv = z0mv;
 z0qv = z0mv;
+
 % make forcing height a pft-level quantity that is the atmospheric forcing height plus pft's z0m+displa
 if frac_veg_nosno_alb == 0
     forc_hgt_u_pft = forc_hgt_u + z0mg + displa;
@@ -183,6 +206,7 @@ else
     forc_hgt_t_pft = forc_hgt_t + z0m + displa;
     forc_hgt_q_pft = forc_hgt_q + z0m + displa;
 end
+
 % intermediate variable for atmospheric potential temperature [K]
 thm = forc_t + 0.0098*forc_hgt_t_pft;
 
@@ -190,16 +214,21 @@ thm = forc_t + 0.0098*forc_hgt_t_pft;
 % calculation of soil wetness factor moved from CanopyFluxes to Biogeophysics1
 if strcmp(HM_in_CLM,'no') == 1
 [dlrad,ulrad,h2ocan,t_veg,taf,t_ref2m,EB_CLM]...
-    = CanopyFluxes(lat,decl,dt_CLM,PFT,elai,esai,htop,displa,z0mv,z0mg,forc_hgt_u_pft,forc_hgt_t_pft,...
-    forc_hgt_q_pft,emv,emg,forc_lwrad,thm,thv,forc_th,forc_q,forc_wind,...
-    forc_pbot,forc_rho,forc_po2,forc_pco2,t_grnd,qg,t_veg,sabv,sabvd,sabvi,fwet,h2ocan,snowdp,soilbeta,btran,...
-    frac_veg_nosno_alb,nrad,tlai_z,vcmaxcintsun,vcmaxcintsha,parsun_z,parsha_z,laisun_z,laisha_z,laisun,laisha);
+    = CanopyFluxes(lat,decl,dt_CLM,PFT,elai,esai,htop,displa,z0mv,z0mg,...
+    forc_hgt_u_pft,forc_hgt_t_pft,forc_hgt_q_pft,emv,emg,forc_lwrad,...
+    thm,thv,forc_th,forc_q,forc_wind,forc_pbot,forc_rho,forc_po2,...
+    forc_pco2,t_grnd,qg,t_veg,sabv,sabvd,sabvi,fwet,h2ocan,snowdp,...
+    soilbeta,btran,frac_veg_nosno_alb,nrad,tlai_z,vcmaxcintsun,...
+    vcmaxcintsha,parsun_z,parsha_z,laisun_z,laisha_z,laisun,laisha);
 elseif strcmp(HM_in_CLM,'yes') == 1
 [dlrad,ulrad,h2ocan,t_veg,taf,t_ref2m,EB_CLM]...
-    = CanopyFluxes_HeatMass(lat,decl,dt_CLM,PFT,elai,esai,htop,BasalArea,displa,z0mv,z0mg,...
-    forc_hgt_u_pft,forc_hgt_t_pft,forc_hgt_q_pft,emv,emg,forc_lwrad,thm,thv,forc_th,forc_q,forc_wind,...
-    forc_pbot,forc_rho,forc_po2,forc_pco2,t_grnd,qg,t_veg,sabv,sabvd,sabvi,fwet,h2ocan,snowdp,soilbeta,btran,...
-    frac_veg_nosno_alb,nrad,tlai_z,vcmaxcintsun,vcmaxcintsha,parsun_z,parsha_z,laisun_z,laisha_z,laisun,laisha);
+    = CanopyFluxes_HeatMass(lat,decl,dt_CLM,PFT,elai,esai,htop,...
+    BasalArea,displa,z0mv,z0mg,forc_hgt_u_pft,forc_hgt_t_pft,...
+    forc_hgt_q_pft,emv,emg,forc_lwrad,thm,thv,forc_th,forc_q,forc_wind,...
+    forc_pbot,forc_rho,forc_po2,forc_pco2,t_grnd,qg,t_veg,sabv,sabvd,...
+    sabvi,fwet,h2ocan,snowdp,soilbeta,btran,frac_veg_nosno_alb,nrad,...
+    tlai_z,vcmaxcintsun,vcmaxcintsha,parsun_z,parsha_z,laisun_z,...
+    laisha_z,laisun,laisha);
 end
 
 [t_can,t_trunk,NR_leaf,NR_trunk,RN_can,H_can,LE_can,IntStor,frac_wet,...
@@ -210,6 +239,7 @@ end
     forc_sol_dir(1)+forc_sol_dif(1),forc_sol_dif(1),forc_lwrad,thm,...
     forc_rh/100,forc_wind,snowdp,t_grnd,emg,albgrd(1),forc_hgt_u,zsno,zlnd,...
     t_can,t_trunk,fwet,h2ocan,IntCapacity,dt_SP);
+
 %-----  5) soil/snow & ground temperature and update surface fluxes  ------
 %{
 Outgoing LW radiation (and net LW radiation for ground) calculated based on

@@ -24,14 +24,11 @@ Method:
 %}
 
 %-------------------------- Physical Constants  ---------------------------
-
 boltz = 5.67*10^(-8);       % Stefan-Boltzmann constant [W m^{-2} K^{-4}]
 T_melt = 273.15;            % melting temperature [K]
-
 em_surf = emg;              % emissivity of ground
 
 %---------------------------  Canopy Parameters  --------------------------
-
 alb_can_dry = 0.11;     % albedo of dry canopy (calibr: 0.09, Alptal)
 alb_can_wet = 0.11;     % albedo of wet canopy (calibr: 0.09, Alptal)
 alb_can_snow = 0.35;    % albedo of snow covered canopy (calibr. Alptal, but 0.3 in Gouttevin et al. (2015))
@@ -73,7 +70,8 @@ if strcmp(sw_to_trunk,'no') == 1
     CC_dir_trunk = 0;
 elseif strcmp(sw_to_trunk,'yes') == 1
     if SolAngle > 0
-        CC_dir_leaf = min(1,CC*(1+4*z_can*(1-frac_height_trunk)/(pi*Diameter*tan(SolAngle))));
+        CC_dir_leaf = min(1,CC*(1+4*z_can*(1-frac_height_trunk)...
+            /(pi*Diameter*tan(SolAngle))));
     else
         CC_dir_leaf = 1;
     end
@@ -82,7 +80,6 @@ end
 
 
 %--------------------------  Radiation Forcing  ---------------------------
-
 SW_in_dif = SW_in_ac_dif;
 SW_in_dir = SW_in_ac-SW_in_dif;
 if SW_in_dir > 0
@@ -94,6 +91,7 @@ else
 end
 
 % LW_in_ac = em_air*boltz*T_air^4;    % longwave radiation above canopy
+
 
 %--------------------------------------------------------------------------
 %---------------------------  Radiation Budget  ---------------------------
@@ -174,7 +172,8 @@ NR_leaf = SW_net_leaf;
 SW_net_trunk = frac_dif*SW_in_ac*(1-sig_leaf)*(1-att_SW)*(1-alb_trunk);
 
 % longwave
-rt0p = SW_net_trunk + em_trunk*(1-att_LW)*(em_surf*boltz*T_surf^4 + LW_in_ac*(1-sig_leaf));
+rt0p = SW_net_trunk + em_trunk*(1-att_LW)*(em_surf*boltz*T_surf^4 ...
+    + LW_in_ac*(1-sig_leaf));
 rt1p = -2*boltz*em_trunk*(1-att_LW);
 rt2p = em_trunk*(1-att_LW)*em_leaf*sig_leaf*boltz;
 
